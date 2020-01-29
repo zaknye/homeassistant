@@ -1,0 +1,67 @@
+  - platform: template
+    switches:
+# Onkyo MEDIA SWITCH
+      onkyo_on:
+        value_template: "{{ is_state('media_player.onkyoreceiver', 'on') }}"
+        turn_on:
+          service: media_player.turn_on
+          entity_id: media_player.onkyoreceiver
+        turn_off:
+          service: media_player.turn_off
+          entity_id: media_player.onkyoreceiver
+# Chromecast input
+      chrome_cast:
+        value_template: "{{ is_state_attr('media_player.onkyoreceiver', 'source', 'CHROMECAST') }}"
+        turn_on:
+          - service: media_player.select_source
+            data:
+              entity_id: media_player.onkyoreceiver
+              source: CHROMECAST
+        turn_off:
+          - service: media_player.select_source
+            data:
+              entity_id: media_player.onkyoreceiver
+              source: CHROMECAST
+      steam_link:
+        value_template: "{{ is_state_attr('media_player.onkyoreceiver', 'source', 'GAME') }}"
+        turn_on:
+          - service: media_player.select_source
+            data:
+              entity_id: media_player.onkyoreceiver
+              source: GAME
+        turn_off:
+          - service: media_player.select_source
+            data:
+              entity_id: media_player.onkyoreceiver
+              source: GAME
+      cable:
+        value_template: "{{ is_state_attr('media_player.onkyoreceiver', 'source', 'CABLE') }}"
+        turn_on:
+          - service: media_player.select_source
+            data:
+              entity_id: media_player.onkyoreceiver
+              source: CABLE
+        turn_off:
+          - service: media_player.select_source
+            data:
+              entity_id: media_player.onkyoreceiver
+              source: CABLE
+      led_strip_blue:
+        value_template: "{{ is_state('light.media_center_backlight', 'on') }}"
+        turn_on:
+          - service: light.turn_on
+            data:
+              entity_id: light.entertainment_center_backlight
+              rgb_color: ( 0, 0, 255 )
+        turn_off:
+          - service: light.turn_on
+            data:
+              entity_id: light.entertainment_center_backlight
+              rgb_color: ( 0, 0, 255 )
+
+#Circadian Switch Settings
+  - platform: circadian_lighting
+    lights_brightness:
+      - light.ge_3way_dimmer_kitchen
+      - light.ge_dimmer_island
+      - light.ge_dimmer_living

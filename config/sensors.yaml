@@ -1,0 +1,33 @@
+    # Weather prediction
+    - platform: yr
+    #Onykyo Volume
+    - platform: template
+      sensors:
+        onkyo_volume:
+          value_template: >
+            {% if is_state('media_player.onkyoreceiver', 'on')  %}
+              {{ (states.media_player.onkyoreceiver.attributes.volume_level | float * 80 | int) }}
+            {% else %}
+              0
+            {% endif %}
+          friendly_name: 'Onkyo Volume'
+    - platform: synologydsm
+      host: 192.168.1.50
+      username: !secret synology_username
+      password: !secret synology_password
+      monitored_conditions:
+        - cpu_15min_load
+        - memory_real_usage
+        - disk_temp
+        - volume_percentage_used
+        - disk_temp
+    - platform: systemmonitor
+      resources:
+        - type: disk_use_percent
+          arg: /
+        - type: memory_use_percent
+        - type: processor_use
+    - platform: time_date
+      display_options:
+        - 'time'
+        - 'date'

@@ -1,0 +1,13 @@
+people:
+  name: People
+  entities:
+    - device_tracker.devikasiphone
+    - device_tracker.galaxy_s10
+
+downstairs_lights:
+  name: Downstairs Lights
+  entities:
+    - light.ge_dimmer_living
+    - light.entertainment_center_backlight
+    - light.ge_3way_dimmer_kitchen
+    - light.ge_dimmer_island

@@ -1,0 +1,156 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude: !secret latitude
+  longitude: !secret longitude
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: !secret elevation
+  # metric for Metric, imperial for Imperial
+  unit_system: imperial
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: !secret time_zone
+  # Customization file
+  customize: !include customize.yaml
+
+
+# Enables the frontend
+frontend:
+  themes:
+    !include themes.yaml
+    
+
+# Enables configuration UI
+config:
+
+# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+# http:
+#   base_url: example.duckdns.org:8123
+
+# Checks for available updates
+# Note: This component will send some information about your system to
+# the developers to assist with development of Home Assistant.
+# For more information, please see:
+# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
+updater:
+  # Optional, allows Home Assistant developers to focus on popular components.
+  # include_used_components: true
+
+# Discover some devices automatically
+discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+conversation:
+
+# Enables support for tracking state changes over time
+history:
+
+# View all events in a logbook
+logbook:
+
+# Enables a map showing the location of tracked devices
+map:
+
+# Track the sun
+sun:
+
+#System Health
+system_health:
+
+#Speedtest Sensor
+#speedtestdotnet:
+
+#Pi Hole
+pi_hole:
+  host: 192.168.1.5
+  ssl: false
+  verify_ssl: false
+
+#Database Settings
+recorder:
+  purge_keep_days: 10
+  purge_interval: 1
+
+#SSL Certificates
+#http:
+#  ssl_certificate: /home/homeassistant/.homeassistant/certificate.pem
+#  ssl_key: /home/homeassistant/.homeassistant/privkey.pem
+
+# Z-Wave Stick
+zwave:
+  usb_path: /dev/ttyACM0
+#
+# Below fixes the delayed off state of the GE Dimmers
+#
+  device_config:
+    light.ge_3way_dimmer_kitchen:
+      refresh_value: true
+      delay: 3
+    light.ge_dimmer_island:
+      refresh_value: true
+      delay: 3
+    light.ge_dimmer_living:
+      refresh_value: true
+      delay: 3
+#  device_config: !include zwave_device.config.yaml
+
+input_boolean:
+  morning_trigger:
+    name: Morning first trigger
+    initial: off
+  
+# Sensors
+sensor: !include config/sensors.yaml
+
+person:
+  - name: Zak
+    id: zak
+    device_trackers:
+      - device_tracker.galaxy_s10
+      - device_tracker.zak_laptop
+  - name: Devi
+    id: devi
+    device_trackers:
+      - device_tracker.devikasiphone
+      - device_tracker.devikas_mbp
+
+binary_sensor:
+  - platform: template
+    sensors:
+      livingroom_motion:
+        friendly_name: "Living Room Motion"
+        device_class: motion
+        value_template: "{{ states('sensor.multisensor_movement')|float > 0 }}"
+
+# Text to speech
+tts:
+  - platform: google_translate
+    service_name: google_say
+
+# Cloud
+cloud:
+
+#Weather plugin
+weather:
+  - platform: darksky
+    api_key: 65be5ac8fdf9f9f8b415011016f676b5
+    mode: daily
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+switch: !include switch.yaml
+scene: !include scene.yaml
+media_player: !include media_player.yaml
+lovelace:
+  mode: yaml
+
+#Lighting Devices
+light: !include light.yaml
+
+#Circadian Lighting
+circadian_lighting:
+
+device_sun_light_trigger:
+  light_group: group.downstairs_lights
+  device_group: group.people

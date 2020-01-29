@@ -1,0 +1,142 @@
+title: Home
+resources:
+  - url: /local/button-card.js
+    type: module
+  - url: /local/mini-media-player-bundle.js
+    type: module
+  - url: /local/bignumber-card.js
+    type: module
+  - url: /local/custom-lovelace/upcoming-media-card/upcoming-media-card.js
+    type: js
+  - url: /community_plugin/mini-graph-card/mini-graph-card.js
+    type: module
+  - url: /community_plugin/weather-card/weather-card.js
+    type: module
+  - url: /community_plugin/lovelace-card-mod/card-mod.js
+    type: js
+  - url: /community_plugin/lovelace-markdown-mod/markdown-mod.js
+    type: module
+    
+button_card_templates:
+  header:
+    style: |
+      ha-card {
+        border-radius: 5px;
+        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+      }
+    styles:
+      card:
+        - width: 315px
+        - height: 60px
+      grid:
+        - grid-template-areas: '"i" "n" "s"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: 1fr min-content min-content
+      img_cell:
+        - align-self: start
+        - text-align: start
+      name:
+        - justify-self: start
+        - padding-left: 10px
+        - font-weight: bold
+        #- text-transform: lowercase
+      state:
+        - justify-self: start
+        - padding-left: 10px
+  header2:
+    style: |
+      ha-card {
+        border-radius: 5px;
+        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+      }
+    styles:
+      card:
+        - width: 420px
+        - height: 60px
+      grid:
+        - grid-template-areas: '"i" "n" "s"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: 1fr min-content min-content
+      img_cell:
+        - align-self: start
+        - text-align: start
+      name:
+        - justify-self: start
+        - padding-left: 10px
+        - font-weight: bold
+        #- text-transform: lowercase
+      state:
+        - justify-self: start
+        - padding-left: 10px
+  card-theme:
+    style: |
+      ha-card {
+        border-radius: 5px;
+        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+      }
+    styles:
+      card:
+        - width: 100px
+        - height: 100px
+      grid:
+        - grid-template-areas: '"i" "n" "s"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: 1fr min-content min-content
+      img_cell:
+        - align-self: start
+        - text-align: start
+      name:
+        - justify-self: start
+        - padding-left: 10px
+        - font-weight: bold
+        - text-transform: lowercase
+      state:
+        - justify-self: start
+        - padding-left: 10px
+    state:
+      - value: 'off'
+        styles:
+          card:
+            - filter: opacity(50%)
+          icon:
+            - filter: grayscale(100%)
+  switch-theme:
+    styles:
+      card:
+        - width: 100px
+        - height: 100px
+      grid:
+        - grid-template-areas: '"i" "n" "s"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: 1fr min-content min-content
+      img_cell:
+        - align-self: start
+        - text-align: start
+      name:
+        - justify-self: start
+        - padding-left: 10px
+        - font-weight: bold
+        - text-transform: lowercase
+      state:
+        - justify-self: start
+        - padding-left: 10px
+    state:
+      - value: 'off'
+        styles:
+          card:
+            - filter: opacity(50%)
+          icon:
+            - filter: grayscale(100%)
+
+views:
+  - !include lovelace/00_dashboard.yaml
+  - !include lovelace/03_downstairs.yaml
+  - !include lovelace/01_media.yaml
+  - !include lovelace/02_network.yaml
+  

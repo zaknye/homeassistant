@@ -1,0 +1,25 @@
+#Onkyo Receiver
+  - platform: onkyo
+    host: 192.168.1.80
+    name: onkyoreceiver
+    sources:
+      video2: 'CABLE'
+      video3: 'GAME'
+      video4: 'AUX'
+      video6: 'PC'
+      strm-box: 'CHROMECAST'
+      dvd: 'BD/DVD'
+      tv: 'TV'
+
+#LG WebOS TV
+
+  - platform: webostv
+    host: 192.168.1.81
+    name: LG OLED
+    filename: webostv.conf
+    timeout: 5
+    
+#Shield TV
+  - platform: androidtv
+    name: NVidia Shield
+    host: 192.168.1.125

@@ -1,0 +1,75 @@
+title: Media
+icon: mdi:speaker
+cards:
+  - type: light
+    entity: light.theater_volume
+    name: Volume
+  - type: vertical-stack
+    cards:
+      #- type: picture
+      #  image: /local/Chromecast-logo.jpg
+      #- type: custom:mini-media-player
+      #  entity: media_player.living_room_tv
+      #  name: Living Room Chromecast
+      #  icon: mdi:router-wireless
+      #  artwork_border: true
+      #  show_source: true
+      #  hide_power: true
+      #  show_progress: true
+      #  hide_icon: true
+      - type: media-control
+        entity: media_player.nvidia_shield
+      - type: "custom:button-card"
+        color_type: blank-card
+  - type: vertical-stack
+    cards:
+      - type: picture-glance
+        title: Onkyo Receiver
+        entities:
+          - switch.cable
+          - switch.steam_link
+          - switch.chrome_cast
+          - switch.onkyo_on
+        image: /local/images/onkyo.jpg
+      - type: horizontal-stack
+        cards:
+          #- type: "custom:button-card"
+          #  color_type: blank-card
+          - type: "custom:button-card"
+            color_type: card
+            color: rgb(180, 180, 180)
+            icon: mdi:volume-medium
+            tap_action:
+              action: call-service
+              service: media_player.volume_down
+              service_data:
+                entity_id: media_player.onkyoreceiver
+          - type: custom:bignumber-card
+            entity: sensor.onkyo_volume
+            scale: 24px
+            min: 0
+            max: 80
+          - type: "custom:button-card"
+            color_type: card
+            color: rgb(180, 180, 180)
+            icon: mdi:volume-high
+            tap_action:
+              action: call-service
+              service: media_player.volume_up
+              service_data:
+                entity_id: media_player.onkyoreceiver
+          - type: "custom:button-card"
+            color_type: card
+            color: rgb(180, 180, 180)
+            icon: mdi:volume-off
+            tap_action:
+              action: call-service
+              service: media_player.volume_mute
+              service_data:
+                entity_id: media_player.onkyoreceiver
+                is_volume_muted: >-
+                  {%- if states.media_player.onkyoreceiver.attributes.is_volume_muted == false -%}
+                  true
+                  {%- else -%}
+                  false
+                  {%- endif -%}

@@ -1,0 +1,191 @@
+#Entertainment Center light automations
+- id: '1543989378167'
+  alias: Entertainment Center Light Change TV ON
+  trigger:
+  - entity_id: media_player.onkyoreceiver
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.tv_backlight_blue
+- id: '1543989378168'
+  alias: Entertainment Center Light Change TV OFF
+  trigger:
+  - entity_id: media_player.onkyoreceiver
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.tv_backlight_white
+- id: '1543989378169'
+  alias: Entertainment Center Light Day ON
+  trigger:
+    platform: time
+    at: '07:30:00'
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.tv_backlight_white
+- id: '1543989378170'
+  alias: Entertainment Center Light Day OFF
+  trigger:
+    platform: time
+    at: '23:30:00'
+  condition: []
+  action:
+  - service: light.turn_off
+    entity_id: light.entertainment_center_backlight
+
+#Light on/off for home and away
+- id: '1543989378171'
+  alias: Lights off Everyone Gone
+  trigger:
+    platform: state
+    entity_id: group.people
+    to: 'not_home'
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.leave_home
+- id: '1543989378172'
+  alias: Lights when arrive home
+  trigger:
+    platform: state
+    entity_id: group.people
+    to: 'home'
+  condition:
+    condition: and
+    conditions:
+      - condition: template
+        value_template: '{{ state_attr("sun.sun", "elevation") < 0 }}'
+  action:
+  - service: light.toggle
+    entity_id: group.downstairs_lights
+
+#First morning motion wakeup automation
+- id: '1543989378173'
+  alias: Devi Wakeup
+  trigger:
+  - entity_id: binary_sensor.livingroom_motion
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+    condition: and
+    conditions:
+      - condition: time
+        after: '6:00'
+        before: '8:00'
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+      - condition: state
+        entity_id: input_boolean.morning_trigger
+        state: 'on'
+  action:
+  - service: input_boolean.turn_off
+    data:
+      entity_id: input_boolean.morning_trigger
+  - service: scene.turn_on
+    entity_id: scene.living_high
+  - service: media_player.play_media
+    data:
+      entity_id: media_player.living_room_speaker
+      media_content_id: 'http://stream1.cprnetwork.org:80/cpr1_aac'
+      media_content_type: 'music'
+  - delay: '00:30:00'
+  - service: media_player.media_stop
+    data:
+      entity_id: media_player.living_room_speaker
+  - service: scene.turn_on
+    entity_id: scene.living_mid
+- id: '1543989378174'
+  alias: Change input boolean
+  trigger:
+    platform: time
+    at: '08:00:00'
+  action:
+  - service: input_boolean.turn_on
+    data:
+      entity_id: input_boolean.morning_trigger
+#Plex Light Automations
+- id: '1543989378174'
+  alias: Plex Starts Playing
+  trigger:
+    platform: state
+    entity_id: media_player.plex_shield_android_tv
+    to: 'playing'
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: sun.sun
+        state: 'below_horizon'
+  action:
+  - service: switch.turn_off
+    entity_id: switch.circadian_lighting_circadian_lighting
+  - service: scene.turn_on
+    entity_id: scene.watch_movie
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      effect: 'colorstrobe'
+  - delay: '00:00:10'
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      brightness: 60
+      effect: ''
+      rgb_color: [36,90,255]
+- id: '1543989378176'
+  alias: Plex Pause
+  trigger:
+    platform: state
+    entity_id: media_player.plex_shield_android_tv
+    from: 'playing'
+    to: 'paused'
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: sun.sun
+        state: 'below_horizon'
+  action:
+  - service: scene.turn_on
+    entity_id: scene.pause_movie
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      brightness: 100
+      rgb_color: [228,255,231]
+  - delay: '00:10:00'
+- id: '1543989378177'
+  alias: Plex Stops Playing
+  trigger:
+    platform: state
+    entity_id: media_player.plex_shield_android_tv
+    to: 'idle'
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: sun.sun
+        state: 'below_horizon'
+  action:
+  - service: scene.turn_on
+    entity_id: scene.after_movie
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      brightness: 100
+      rgb_color: [36,90,255]
+  - delay: '00:10:00'
+  - service: switch.turn_on
+    entity_id: switch.circadian_lighting_circadian_lighting

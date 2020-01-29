@@ -1,0 +1,112 @@
+title: Network
+icon: mdi:lan
+cards:
+  - type: custom:mini-graph-card
+    style: |
+      ha-card {
+        border-radius: 5px;
+        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+      }
+    name: Network Speed
+    icon: mdi:lan
+    entities:
+      - entity: sensor.speedtest_download
+        name: Down
+      - entity: sensor.speedtest_upload
+        name: Upload
+      - entity: sensor.speedtest_ping
+        name: Ping
+        y_axis: secondary
+  - type: custom:mini-graph-card
+    style: |
+      ha-card {
+        border-radius: 5px;
+        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+      }
+    name: Pi-Hole Stats
+    icon: mdi:lan
+    entities:
+      - entity: sensor.pi_hole_ads_percentage_blocked_today
+        name: '% Blocked'
+      - entity: sensor.pi_hole_ads_blocked_today
+        name: '# Blocked'
+      - entity:  sensor.pi_hole_dns_queries_today
+        name: Queries
+      - entity: sensor.pi_hole_dns_unique_clients
+        name: Clients
+        y_axis: secondary
+  - type: custom:mini-graph-card
+    style: |
+      ha-card {
+        border-radius: 5px;
+        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+      }
+    name: Server Status
+    icon: mdi:server
+    entities:
+      - entity: sensor.processor_use
+        name: CPU
+        y_axis: secondary
+      - entity: sensor.memory_use_percent
+        name: Memory
+      - entity: sensor.disk_use_percent
+        name: Disk
+  - type: vertical-stack
+    cards:
+      - type: custom:mini-graph-card
+        style: |
+          ha-card {
+            border-radius: 5px;
+            -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+            -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+            box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+          }
+        name: NAS Status
+        icon: mdi:harddisk
+        entities:
+        - entity: sensor.synology_dsm_cpu_load_15_min
+          name: CPU
+        - entity: sensor.synology_dsm_memory_usage_real
+          name: Memory
+      - type: horizontal-stack
+        style: |
+          ha-card {
+            border-radius: 5px;
+            -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+            -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+            box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+          }
+        cards:
+          - type: custom:mini-graph-card
+            style: |
+              ha-card {
+                border-radius: 5px;
+                -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+              }
+            entities:
+              - entity: sensor.synology_dsm_temperature_sda
+                name: Temp
+                line_color: blue
+          - type: custom:mini-graph-card
+            style: |
+              ha-card {
+                border-radius: 5px;
+                -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+              }
+            entities:
+              - entity: sensor.synology_dsm_volume_used_volume_1
+                name: Disk Usage
+                icon: harddisk
+                line_color: red
+                show:
+                  graph: bar

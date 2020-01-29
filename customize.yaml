@@ -1,0 +1,12 @@
+switch.chrome_cast:
+  friendly_name: Chrome Cast
+  icon: mdi:google-chrome
+switch.onkyo_on:
+  friendly_name: Receiver On
+  icon: mdi:power
+switch.steam_link:
+  friendly_name: Steam Link
+  icon: mdi:shield-half-full
+switch.cable:
+  friendly_name: Cable Box
+  icon: mdi:television-classic

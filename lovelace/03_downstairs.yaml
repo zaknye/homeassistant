@@ -1,0 +1,103 @@
+title: Downstairs
+icon: mdi:home-floor-1
+cards:
+  - type: vertical-stack
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: "custom:button-card"
+            template: header
+            color: white
+            color_type: label-card
+            name: Lighting
+          - type: horizontal-stack
+            cards:
+              - type: "custom:button-card"
+                template: card-theme
+                entity: light.ge_3way_dimmer_kitchen
+                color_type: card
+                icon: mdi:track-light
+                name: Kitchen
+              - type: "custom:button-card"
+                template: card-theme
+                entity: light.ge_dimmer_island
+                color_type: card
+                icon: mdi:door-open
+                name: Island
+              - type: "custom:button-card"
+                template: card-theme
+                entity: switch.leviton_dining
+                color_type: card
+                icon: mdi:file-cabinet
+                name: Dining
+          - type: horizontal-stack
+            cards:
+              - type: "custom:button-card"
+                template: card-theme
+                entity: light.ge_dimmer_living
+                color_type: card
+                icon: mdi:ceiling-light
+                name: Living
+              - type: "custom:button-card"
+                template: card-theme
+                entity: light.entertainment_center_backlight
+                color_type: card
+                icon: mdi:television
+                name: TV
+                action: more_info
+  - type: vertical-stack
+    cards:
+      - type: "custom:button-card"
+        template: header2
+        color: auto
+        color_type: card
+        name: Living Area Level
+      - type: horizontal-stack
+        cards:
+          - type: "custom:button-card"
+            template: card-theme
+            name: lo
+            color: rgb(255,255,204)
+            color_type: icon
+            icon: mdi:brightness-4
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.living_low
+          - type: "custom:button-card"
+            template: card-theme
+            name: med
+            color: rgb(255,255,153)
+            color_type: icon
+            icon: mdi:brightness-6
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.living_mid
+          - type: "custom:button-card"  
+            template: card-theme
+            name: hi
+            color: rgb(255,255,102)
+            color_type: icon
+            icon: mdi:brightness-7
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.living_high
+          - type: "custom:button-card"
+            template: card-theme
+            name: 'off'
+            color: black
+            color_type: card
+            icon: mdi:brightness-5
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.ALL_off
+            styles:
+              label:
+                - color: green

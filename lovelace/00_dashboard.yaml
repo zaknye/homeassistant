@@ -1,0 +1,108 @@
+title: Home
+icon: mdi:home-heart
+background: 'left top / cover no-repeat url("/local/images/plant-background2.jpg") fixed'
+cards:
+  - type: custom:weather-card
+    style: |
+      ha-card {
+        border-radius: 5px;
+        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+      }
+    entity: weather.dark_sky
+    name: Weather
+  - type: vertical-stack
+    cards:
+      - type: custom:mini-graph-card
+        style: |
+          ha-card {
+            border-radius: 5px;
+            -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+            -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+            box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+          }
+        entities:
+          - entity: sensor.multisensor_temperature
+            name: Downstairs Temperature
+      - type: horizontal-stack
+        cards:
+          - type: custom:mini-graph-card
+            style: |
+              ha-card {
+                border-radius: 5px;
+                -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+              }
+            entities:
+              - entity: sensor.multisensor_humidity
+                name: Humidity
+          - type: custom:mini-graph-card
+            style: |
+              ha-card {
+                border-radius: 5px;
+                -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+                box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+              }
+            entities:
+              - entity: sensor.multisensor_luminance
+                name: Luminance
+  - type: markdown
+    content: >
+        # [[ sensor.time.state ]]
+        
+        ### [[ sensor.date.state ]]
+    style: |
+      ha-card {
+        margin-top: 2em;
+        margin-bottom: 4em;
+        background-color: rgba(0, 0, 0, 0);
+        font-family: 'Arial Black', Gadget, sans-serif;
+        font-size: 200%;
+        -webkit-box-shadow: none;
+        -moz-box-shadow: none;
+        box-shadow: none;
+        text-align: center;
+      }
+      h1, h3 {
+        font-weight: 300 !important;
+      }
+  - type: vertical-stack
+    cards:
+      - type: "custom:button-card"
+        template: header2
+        color_type: label-card
+        color: rgb(255, 255, 255)
+        name: Who's Home
+      - type: "custom:button-card"
+        color_type: blank-card
+      - type: horizontal-stack
+        cards:
+          - type: "custom:button-card"
+            template: card-theme
+            entity: device_tracker.devikasiphone
+            color_type: card
+            color: rgb(66, 134, 244)
+            icon: mdi:human-female
+            name: Devi
+            state:
+              - value: 'home'
+                color: rgb(255, 255, 255)
+              - value: 'not_home'
+                color: rgb(211, 211, 211)
+          - type: "custom:button-card"
+            template: card-theme
+            entity: device_tracker.galaxy_s10
+            color_type: card
+            color: rgb(66, 134, 244)
+            icon: mdi:human-male
+            name: Zak
+            state:
+              - value: 'home'
+                color: rgb(255, 255, 255)
+              - value: 'not_home'
+                color: rgb(211, 211, 211)
+          - type: "custom:button-card"
+            color_type: blank-card
