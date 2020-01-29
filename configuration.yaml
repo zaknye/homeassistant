@@ -62,7 +62,7 @@ system_health:
 
 #Pi Hole
 pi_hole:
-  host: 192.168.1.5
+  host: !secret pi_hole_ip
   ssl: false
   verify_ssl: false
 
@@ -133,7 +133,7 @@ cloud:
 #Weather plugin
 weather:
   - platform: darksky
-    api_key: 65be5ac8fdf9f9f8b415011016f676b5
+    api_key: !secret darksky_api
     mode: daily
 
 group: !include groups.yaml

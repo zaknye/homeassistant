@@ -1,6 +1,6 @@
 #Onkyo Receiver
   - platform: onkyo
-    host: 192.168.1.80
+    host: !secret onkyo_ip
     name: onkyoreceiver
     sources:
       video2: 'CABLE'
@@ -14,7 +14,7 @@
 #LG WebOS TV
 
   - platform: webostv
-    host: 192.168.1.81
+    host: !secret webostv_ip
     name: LG OLED
     filename: webostv.conf
     timeout: 5
@@ -22,4 +22,4 @@
 #Shield TV
   - platform: androidtv
     name: NVidia Shield
-    host: 192.168.1.125
+    host: !secret shield_ip
