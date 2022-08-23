@@ -1,0 +1,145 @@
+- name: TV Backlight White
+  entities:
+    light.entertainment_center_backlight:
+      state: true
+      brightness: 97
+      rgb_color:
+      - 228
+      - 255
+      - 231
+  id: e744b128ad0a49f5b76ca74eb9404f5a
+- name: TV Backlight Blue
+  entities:
+    light.entertainment_center_backlight:
+      state: true
+      brightness: 180
+      rgb_color:
+      - 36
+      - 90
+      - 255
+  id: 10d0629b42604737a745ce9a76918e59
+- name: Living Low
+  entities:
+    light.ge_3way_dimmer_living:
+      state: true
+      brightness: 40
+    switch.living_room_outlet_switch:
+      state: true
+    light.kitchen_kitchen_island_dimmer:
+      state: true
+      brightness: 40
+    light.kitchen_kitchen_recessed_dimmer:
+      state: true
+      brightness: 50
+    light.entryway_hall_lights_dimmer:
+      state: true
+      brightness: 50
+  id: 8dd8b9cd481b424fbc724c7e8b78b33a
+- name: Living Mid
+  entities:
+    light.ge_3way_dimmer_living:
+      state: true
+      brightness: 100
+    switch.living_room_outlet_switch:
+      state: true
+    light.kitchen_kitchen_island_dimmer:
+      state: true
+      brightness: 100
+    light.kitchen_kitchen_recessed_dimmer:
+      state: true
+      brightness: 50
+    light.entryway_hall_lights_dimmer:
+      state: true
+      brightness: 100
+  id: 7dbaea2b6e4b46ad97e6425d3eee2d16
+- name: Living High
+  entities:
+    light.ge_3way_dimmer_living:
+      state: true
+      brightness: 255
+    switch.living_room_outlet_switch:
+      state: true
+    light.kitchen_kitchen_island_dimmer:
+      state: true
+      brightness: 255
+    light.kitchen_kitchen_recessed_dimmer:
+      state: true
+      brightness: 245
+    light.entryway_hall_lights_dimmer:
+      state: true
+      brightness: 180
+  id: d8437038cf6f4a95bda96d71b1b87c00
+- name: All OFF
+  entities:
+    light.ge_3way_dimmer_kitchen:
+      state: false
+    switch.leviton_dining:
+      state: false
+    light.ge_dimmer_living:
+      state: false
+    light.ge_dimmer_island:
+      state: false
+  id: c913b1a7ba8c4ec699972ecee81a7e20
+- name: Arrive Home
+  entities:
+    light.ge_3way_dimmer_kitchen:
+      state: true
+      brightness: 255
+    light.ge_dimmer_living:
+      state: true
+      brightness: 255
+    light.ge_dimmer_island:
+      state: true
+      brightness: 245
+    light.entertainment_center_backlight:
+      state: true
+      brightness: 97
+      rgb_color:
+      - 228
+      - 255
+      - 231
+  id: c2835241b6d24b8b9e7df1f70a4c02c0
+- name: Leave Home
+  entities:
+    light.ge_3way_dimmer_kitchen:
+      state: false
+    switch.leviton_dining:
+      state: false
+    light.ge_dimmer_living:
+      state: false
+    light.ge_dimmer_island:
+      state: false
+    light.entertainment_center_backlight:
+      state: false
+  id: f3eae63113fe467a8cd285bd1f6f8565
+- name: Watch Movie
+  entities:
+    light.nodeid_12_dimmer_basement:
+      state: true
+      brightness: 25
+  id: 0e2897603702436ea69272ce21803775
+- name: After Movie
+  entities:
+    light.nodeid_12_dimmer_basement:
+      state: true
+      brightness: 100
+  id: 437c4360018541459bd0c22e56dc1dc4
+- name: Pause Movie
+  entities:
+    light.nodeid_12_dimmer_basement:
+      state: true
+      brightness: 75
+  id: 8f39571e73e542849535e51ea3df6cd7
+- name: Upstairs Off
+  entities:
+    switch.jasco_switch_upstairs_hallway:
+      state: false
+    switch.leviton_loft:
+      state: false
+  id: 4b7cd2b20b2b463baea60bcd62fe5b4b
+- name: Upstairs On
+  entities:
+    switch.jasco_switch_upstairs_hallway:
+      state: true
+    switch.leviton_loft:
+      state: true
