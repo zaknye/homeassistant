@@ -1,0 +1,74 @@
+- id: '1543989378179'
+  alias: Plex Starts Playing
+  trigger:
+    platform: state
+    entity_id: media_player.plex_plex_for_android_tv_shield_android_tv
+    to: playing
+  condition:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  action:
+  - service: scene.turn_on
+    entity_id: scene.watch_movie
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      effect: rb_cross_fade
+  - delay: 00:00:20
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      brightness: 60
+      effect: ''
+      rgb_color:
+      - 36
+      - 90
+      - 255
+- id: '1543989378176'
+  alias: Plex Pause
+  trigger:
+    platform: state
+    entity_id: media_player.plex_plex_for_android_tv_shield_android_tv
+    from: playing
+    to: paused
+  condition:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  action:
+  - service: scene.turn_on
+    entity_id: scene.pause_movie
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      brightness: 100
+      rgb_color:
+      - 228
+      - 255
+      - 231
+  - delay: 00:10:00
+- id: '1543989378177'
+  alias: Plex Stops Playing
+  trigger:
+    platform: state
+    entity_id: media_player.plex_plex_for_android_tv_shield_android_tv
+    to: idle
+  condition:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  action:
+  - service: scene.turn_on
+    entity_id: scene.after_movie
+  - service: light.turn_on
+    data:
+      entity_id: light.entertainment_center_backlight
+      brightness: 100
+      rgb_color:
+      - 36
+      - 90
+      - 255
+  - delay: 00:10:00
+  - service: switch.turn_on
+    entity_id: switch.circadian_lighting_circadian_lighting

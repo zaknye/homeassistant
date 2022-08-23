@@ -1,0 +1,18 @@
+lights:
+  - light.ge_3way_dimmer_living
+  - light.entryway_hall_lights_dimmer
+  - light.kitchen_kitchen_island_dimmer
+  - light.kitchen_kitchen_recessed_dimmer
+prefer_rgb_color: false
+transition: 45
+initial_transition: 1
+interval: 90
+min_brightness: 1
+max_brightness: 98
+min_color_temp: 2000
+max_color_temp: 5500
+sleep_brightness: 1
+sleep_color_temp: 1000
+take_over_control: true
+detect_non_ha_changes: false
+only_once: false

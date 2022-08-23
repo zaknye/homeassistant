@@ -1,0 +1,131 @@
+#############################
+#   Entertainment Center    #
+#############################
+- id: '1543989378167'
+  alias: Entertainment Center Light Change TV ON
+  trigger:
+  - entity_id: media_player.onkyoreceiver
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.tv_backlight_blue
+- id: '1543989378168'
+  alias: Entertainment Center Light Change TV OFF
+  trigger:
+  - entity_id: media_player.onkyoreceiver
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.tv_backlight_white
+- id: '1543989378169'
+  alias: Entertainment Center Light Day ON
+  trigger:
+    platform: time
+    at: 07:30:00
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.tv_backlight_white
+- id: '1543989378170'
+  alias: Entertainment Center Light Day OFF
+  trigger:
+    platform: time
+    at: '23:30:00'
+  condition: []
+  action:
+  - service: light.turn_off
+    entity_id: light.entertainment_center_backlight
+#############################
+#   Arriving/Leaving Home   #
+#############################
+- id: '1543989378171'
+  alias: Lights off Everyone Gone
+  trigger:
+    platform: state
+    entity_id: group.people
+    to: not_home
+  condition: []
+  action:
+  - service: scene.turn_on
+    entity_id: scene.leave_home
+- id: '1543989378172'
+  alias: Lights when arrive home
+  trigger:
+    platform: state
+    entity_id: group.people
+    to: home
+  condition:
+  - condition: template
+    value_template: '{{ state_attr("sensor.vision_luminance_downstairs") < 60.0 }}'
+  action:
+  - service: light.turn_on
+    entity_id: group.downstairs_lights
+#############################
+#       Time of Day         #
+#############################
+- id: '1543989378178'
+  alias: Interior Lights on at sunset
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.vision_luminance_upstairs
+    #value_template: '{{ state_attr("sensor.vision_luminance_downstairs", "value") }}'
+    below: 60
+    attribute: value
+  condition:
+  - condition: state
+    entity_id: group.people
+    state: home
+  action:
+  - service: scene.turn_on
+    entity_id: scene.living_high
+  mode: single
+- id: '1543989378180'
+  alias: Bedtime Lights Off
+  trigger:
+    platform: state
+    entity_id: binary_sensor.going_to_bed
+    to: 'on'
+  action:
+  - service: scene.turn_on
+    entity_id: scene.leave_home
+  - delay: 00:10:00
+  - service: scene.turn_on
+    entity_id: scene.upstairs_off
+- id: '1543959378178'
+  alias: Exterior Lights on at sunset
+  trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    state: below_horizon
+  action:
+  - service: switch.turn_off
+    entity_id: scene.living_high
+#############################
+#         Upstairs          #
+#############################
+- id: '1543989378181'
+  alias: Upstairs Lights On
+  trigger:
+    platform: state
+    entity_id: binary_sensor.upstairs_motion
+    from: 'off'
+    to: 'on'
+  action:
+  - service: scene.turn_on
+    entity_id: scene.upstairs_on
+- id: '1543989378182'
+  alias: Upstairs Lights Off
+  trigger:
+    platform: state
+    entity_id: binary_sensor.upstairs_motion
+    from: 'on'
+    to: 'off'
+  action:
+  - service: scene.turn_on
+    entity_id: scene.upstairs_off
