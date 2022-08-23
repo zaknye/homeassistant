@@ -1,30 +1,12 @@
 title: Home
-resources:
-  - url: /local/button-card.js
-    type: module
-  - url: /local/mini-media-player-bundle.js
-    type: module
-  - url: /local/bignumber-card.js
-    type: module
-  - url: /local/custom-lovelace/upcoming-media-card/upcoming-media-card.js
-    type: js
-  - url: /community_plugin/mini-graph-card/mini-graph-card.js
-    type: module
-  - url: /community_plugin/weather-card/weather-card.js
-    type: module
-  - url: /community_plugin/lovelace-card-mod/card-mod.js
-    type: js
-  - url: /community_plugin/lovelace-markdown-mod/markdown-mod.js
-    type: module
     
 button_card_templates:
   header:
+    color: white
     style: |
       ha-card {
-        border-radius: 5px;
-        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
+        --paper-card-background-color: 'rgba(11, 11, 11, 0.00)';
+        box-shadow: 2px 2px rgba(0,0,0,0.0);
       }
     styles:
       card:
@@ -38,9 +20,12 @@ button_card_templates:
         - align-self: start
         - text-align: start
       name:
+        - font-size: 20px
+        - font-weight: bold
+        - font-family: Helvetica
+        - letter-spaceing: '-0.01em'
         - justify-self: start
         - padding-left: 10px
-        - font-weight: bold
         #- text-transform: lowercase
       state:
         - justify-self: start
@@ -73,24 +58,36 @@ button_card_templates:
         - justify-self: start
         - padding-left: 10px
   card-theme:
+    show_name: false
+    size: 60%   #Size of Icon
     style: |
       ha-card {
-        border-radius: 5px;
-        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-      }
+        box-shadow:
+          {% if is_state('sun.sun', 'above_horizon') and is_state(config.entity, 'true') %}
+            inset -4px -4px 8px 0 rgba(255,255,255,.5), inset 4px 4px 8px 0 rgba(0,0,0,.03);
+          {% elif is_state('sun.sun', 'above_horizon') and is_state(config.entity, 'off') %}                      
+            -5px -5px 8px 0 rgba(255,255,255,.5),5px 5px 8px 0 rgba(0,0,0,.03);
+          {% elif is_state('sun.sun', 'below_horizon') and is_state(config.entity, 'on') %}                      
+            inset -4px -4px 10px 0 rgba(50, 50, 50,.5), inset 4px 4px 12px 0 rgba(0,0,0,.3); 
+          {% elif is_state('sun.sun', 'below_horizon') and is_state(config.entity, 'off') %}   
+            -5px -5px 8px 0 rgba(50, 50, 50,.5),5px 5px 8px 0 rgba(0,0,0,.15);
+          {% endif %}
+      } 
     styles:
       card:
-        - width: 100px
-        - height: 100px
+        - width: 60px
+        - height: 60px
+        - border-radius: 15px
+        - background-color: var(--primary-background-color)
+      icon:
+        - color: var(--primary-text-color)
       grid:
         - grid-template-areas: '"i" "n" "s"'
         - grid-template-columns: 1fr
         - grid-template-rows: 1fr min-content min-content
       img_cell:
-        - align-self: start
-        - text-align: start
+        - align-self: center
+        - text-align: center
       name:
         - justify-self: start
         - padding-left: 10px
@@ -100,12 +97,10 @@ button_card_templates:
         - justify-self: start
         - padding-left: 10px
     state:
-      - value: 'off'
-        styles:
-          card:
-            - filter: opacity(50%)
+      - styles:
           icon:
-            - filter: grayscale(100%)
+            - color: 'var(--paper-item-icon-active-color)  '
+        value: 'on'
   switch-theme:
     styles:
       card:
@@ -137,6 +132,7 @@ button_card_templates:
 views:
   - !include lovelace/00_dashboard.yaml
   - !include lovelace/03_downstairs.yaml
+  - !include lovelace/04_upstairs.yaml
   - !include lovelace/01_media.yaml
   - !include lovelace/02_network.yaml
   

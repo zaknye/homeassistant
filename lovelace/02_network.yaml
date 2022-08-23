@@ -27,17 +27,15 @@ cards:
         -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
         box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
       }
-    name: Pi-Hole Stats
+    name: AdGuard Stats
     icon: mdi:lan
     entities:
-      - entity: sensor.pi_hole_ads_percentage_blocked_today
+      - entity: sensor.adguard_dns_queries_blocked_ratio
         name: '% Blocked'
-      - entity: sensor.pi_hole_ads_blocked_today
-        name: '# Blocked'
-      - entity:  sensor.pi_hole_dns_queries_today
+      - entity: sensor.adguard_dns_queries
         name: Queries
-      - entity: sensor.pi_hole_dns_unique_clients
-        name: Clients
+      - entity: sensor.adguard_average_processing_speed
+        name: Speed
         y_axis: secondary
   - type: custom:mini-graph-card
     style: |
@@ -50,7 +48,7 @@ cards:
     name: Server Status
     icon: mdi:server
     entities:
-      - entity: sensor.processor_use
+      - entity: sensor.processor_use_percent
         name: CPU
         y_axis: secondary
       - entity: sensor.memory_use_percent
@@ -70,10 +68,14 @@ cards:
         name: NAS Status
         icon: mdi:harddisk
         entities:
-        - entity: sensor.synology_dsm_cpu_load_15_min
+        - entity: sensor.the_citadel_cpu_load_total
           name: CPU
-        - entity: sensor.synology_dsm_memory_usage_real
+        - entity: sensor.the_citadel_memory_usage_real
           name: Memory
+        - entity: sensor.the_citadel_network_down
+          name: Network Down
+        - entity: sensor.the_citadel_network_up
+          name: Network Up
       - type: horizontal-stack
         style: |
           ha-card {
@@ -92,10 +94,10 @@ cards:
                 box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
               }
             entities:
-              - entity: sensor.synology_dsm_temperature_sda
+              - entity: sensor.the_citadel_temperature
                 name: Temp
                 line_color: blue
-          - type: custom:mini-graph-card
+          - type: gauge
             style: |
               ha-card {
                 border-radius: 5px;
@@ -103,10 +105,6 @@ cards:
                 -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
                 box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
               }
-            entities:
-              - entity: sensor.synology_dsm_volume_used_volume_1
-                name: Disk Usage
-                icon: harddisk
-                line_color: red
-                show:
-                  graph: bar
+            entity: sensor.the_citadel_volume_1_volume_used
+            name: Disk Usage
+            icon: harddisk

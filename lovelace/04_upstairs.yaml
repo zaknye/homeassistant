@@ -1,0 +1,27 @@
+title: Upstairs
+icon: mdi:home-floor-2
+cards:
+  - type: vertical-stack
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: "custom:button-card"
+            template: header
+            color: white
+            color_type: label-card
+            name: Lighting
+          - type: horizontal-stack
+            cards:
+              - type: "custom:button-card"
+                template: card-theme
+                entity: switch.jasco_switch_upstairs_hallway
+                color_type: card
+                icon: mdi:door-open
+                name: Hallway
+              - type: "custom:button-card"
+                template: card-theme
+                entity: switch.leviton_loft
+                color_type: card
+                icon: mdi:desktop-classic
+                name: Loft
+              

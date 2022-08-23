@@ -1,164 +1,166 @@
 """Class for integrations in HACS."""
+from __future__ import annotations
+
 import json
-from aiogithubapi import AIOGitHubException
+from typing import TYPE_CHECKING, Any
+
 from homeassistant.loader import async_get_custom_components
-from .repository import HacsRepository, register_repository_class
+
+from ..enums import HacsCategory, HacsDispatchEvent, HacsGitHubRepo, RepositoryFile
+from ..exceptions import AddonRepositoryException, HacsException
+from ..utils.decode import decode_content
+from ..utils.decorator import concurrent
+from ..utils.filters import get_first_directory_in_directory
+from .base import HacsRepository
+
+if TYPE_CHECKING:
+    from ..base import HacsBase
 
 
-@register_repository_class
-class HacsIntegration(HacsRepository):
+class HacsIntegrationRepository(HacsRepository):
     """Integrations in HACS."""
 
-    category = "integration"
-
-    def __init__(self, full_name):
+    def __init__(self, hacs: HacsBase, full_name: str):
         """Initialize."""
-        super().__init__()
-        self.information.full_name = full_name
-        self.information.category = self.category
-        self.domain = None
+        super().__init__(hacs=hacs)
+        self.data.full_name = full_name
+        self.data.full_name_lower = full_name.lower()
+        self.data.category = HacsCategory.INTEGRATION
         self.content.path.remote = "custom_components"
         self.content.path.local = self.localpath
 
     @property
     def localpath(self):
         """Return localpath."""
-        return f"{self.system.config_path}/custom_components/{self.domain}"
+        return f"{self.hacs.core.config_path}/custom_components/{self.data.domain}"
 
-    @property
-    def config_flow(self):
-        """Return bool if integration has config_flow."""
-        if self.manifest:
-            if self.information.full_name == "hacs/integration":
-                return False
-            return self.manifest.get("config_flow", False)
-        return False
+    async def async_post_installation(self):
+        """Run post installation steps."""
+        if self.data.config_flow:
+            if self.data.full_name != HacsGitHubRepo.INTEGRATION:
+                await self.reload_custom_components()
+            if self.data.first_install:
+                self.pending_restart = False
+                return
+        self.pending_restart = True
 
     async def validate_repository(self):
         """Validate."""
         await self.common_validate()
 
-        # Attach repository
-        if self.repository_object is None:
-            self.repository_object = await self.github.get_repo(
-                self.information.full_name
-            )
-
         # Custom step 1: Validate content.
-        if self.repository_manifest:
-            if self.repository_manifest.content_in_root:
-                self.content.path.remote = ""
+        if self.repository_manifest.content_in_root:
+            self.content.path.remote = ""
 
         if self.content.path.remote == "custom_components":
-            ccdir = await self.repository_object.get_contents(
-                self.content.path.remote, self.ref
-            )
-            if not isinstance(ccdir, list):
-                self.validate.errors.append("Repostitory structure not compliant")
+            name = get_first_directory_in_directory(self.tree, "custom_components")
+            if name is None:
+                if (
+                    "repository.json" in self.treefiles
+                    or "repository.yaml" in self.treefiles
+                    or "repository.yml" in self.treefiles
+                ):
+                    raise AddonRepositoryException()
+                raise HacsException(
+                    f"Repository structure for {self.ref.replace('tags/','')} is not compliant"
+                )
+            self.content.path.remote = f"custom_components/{name}"
 
-            for item in ccdir or []:
-                if item.type == "dir":
-                    self.content.path.remote = item.path
-                    break
+        # Get the content of manifest.json
+        if manifest := await self.async_get_integration_manifest():
+            try:
+                self.integration_manifest = manifest
+                self.data.authors = manifest.get("codeowners", [])
+                self.data.domain = manifest["domain"]
+                self.data.manifest_name = manifest.get("name")
+                self.data.config_flow = manifest.get("config_flow", False)
 
-        if self.repository_manifest.zip_release:
-            self.content.objects = self.releases.last_release_object.assets
+            except KeyError as exception:
+                self.validate.errors.append(
+                    f"Missing expected key '{exception}' in { RepositoryFile.MAINIFEST_JSON}"
+                )
+                self.hacs.log.error(
+                    "Missing expected key '%s' in '%s'", exception, RepositoryFile.MAINIFEST_JSON
+                )
 
-        else:
-            self.content.objects = await self.repository_object.get_contents(
-                self.content.path.remote, self.ref
-            )
-
-        self.content.files = []
-        for filename in self.content.objects or []:
-            self.content.files.append(filename.name)
-
-        if not await self.get_manifest():
-            self.validate.errors.append("Missing manifest file.")
+        # Set local path
+        self.content.path.local = self.localpath
 
         # Handle potential errors
         if self.validate.errors:
             for error in self.validate.errors:
-                if not self.system.status.startup:
-                    self.logger.error(error)
+                if not self.hacs.status.startup:
+                    self.logger.error("%s %s", self.string, error)
         return self.validate.success
 
-    async def registration(self):
-        """Registration."""
-        if not await self.validate_repository():
-            return False
-
-        # Run common registration steps.
-        await self.common_registration()
-
-        # Get the content of the manifest file.
-        await self.get_manifest()
-
-        # Set local path
-        self.content.path.local = self.localpath
-
-    async def update_repository(self):
+    @concurrent(concurrenttasks=10, backoff_time=5)
+    async def update_repository(self, ignore_issues=False, force=False):
         """Update."""
-        if self.github.ratelimits.remaining == 0:
+        if not await self.common_update(ignore_issues, force) and not force:
             return
-        await self.common_update()
 
-        # Get integration objects.
-
-        if self.repository_manifest:
-            if self.repository_manifest.content_in_root:
-                self.content.path.remote = ""
+        if self.repository_manifest.content_in_root:
+            self.content.path.remote = ""
 
         if self.content.path.remote == "custom_components":
-            ccdir = await self.repository_object.get_contents(
-                self.content.path.remote, self.ref
-            )
-            if not isinstance(ccdir, list):
-                self.validate.errors.append("Repostitory structure not compliant")
+            name = get_first_directory_in_directory(self.tree, "custom_components")
+            self.content.path.remote = f"custom_components/{name}"
 
-            self.content.path.remote = ccdir[0].path
+        # Get the content of manifest.json
+        if manifest := await self.async_get_integration_manifest():
+            try:
+                self.integration_manifest = manifest
+                self.data.authors = manifest.get("codeowners", [])
+                self.data.domain = manifest["domain"]
+                self.data.manifest_name = manifest.get("name")
+                self.data.config_flow = manifest.get("config_flow", False)
 
-        try:
-            self.content.objects = await self.repository_object.get_contents(
-                self.content.path.remote, self.ref
-            )
-        except AIOGitHubException:
-            return
-
-        self.content.files = []
-        for filename in self.content.objects or []:
-            self.content.files.append(filename.name)
-
-        await self.get_manifest()
+            except KeyError as exception:
+                self.validate.errors.append(
+                    f"Missing expected key '{exception}' in { RepositoryFile.MAINIFEST_JSON}"
+                )
+                self.hacs.log.error(
+                    "Missing expected key '%s' in '%s'", exception, RepositoryFile.MAINIFEST_JSON
+                )
 
         # Set local path
         self.content.path.local = self.localpath
+
+        # Signal entities to refresh
+        if self.data.installed:
+            self.hacs.async_dispatch(
+                HacsDispatchEvent.REPOSITORY,
+                {
+                    "id": 1337,
+                    "action": "update",
+                    "repository": self.data.full_name,
+                    "repository_id": self.data.id,
+                },
+            )
 
     async def reload_custom_components(self):
         """Reload custom_components (and config flows)in HA."""
         self.logger.info("Reloading custom_component cache")
-        del self.hass.data["custom_components"]
-        await async_get_custom_components(self.hass)
+        del self.hacs.hass.data["custom_components"]
+        await async_get_custom_components(self.hacs.hass)
+        self.logger.info("Custom_component cache reloaded")
 
-    async def get_manifest(self):
-        """Get info from the manifest file."""
-        manifest_path = f"{self.content.path.remote}/manifest.json"
-        try:
-            manifest = await self.repository_object.get_contents(
-                manifest_path, self.ref
-            )
-            manifest = json.loads(manifest.content)
-        except Exception:  # pylint: disable=broad-except
-            return False
+    async def async_get_integration_manifest(self, ref: str = None) -> dict[str, Any] | None:
+        """Get the content of the manifest.json file."""
+        manifest_path = (
+            "manifest.json"
+            if self.repository_manifest.content_in_root
+            else f"{self.content.path.remote}/{RepositoryFile.MAINIFEST_JSON}"
+        )
 
-        if manifest:
-            self.manifest = manifest
-            self.information.authors = manifest["codeowners"]
-            self.domain = manifest["domain"]
-            self.information.name = manifest["name"]
-            self.information.homeassistant_version = manifest.get("homeassistant")
+        if not manifest_path in (x.full_path for x in self.tree):
+            raise HacsException(f"No {RepositoryFile.MAINIFEST_JSON} file found '{manifest_path}'")
 
-            # Set local path
-            self.content.path.local = self.localpath
-            return True
-        return False
+        response = await self.hacs.async_github_api_method(
+            method=self.hacs.githubapi.repos.contents.get,
+            repository=self.data.full_name,
+            path=manifest_path,
+            **{"params": {"ref": ref or self.version_to_download()}},
+        )
+        if response:
+            return json.loads(decode_content(response.data.content))

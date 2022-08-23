@@ -1,13 +1,46 @@
 people:
   name: People
   entities:
-    - device_tracker.devikasiphone
-    - device_tracker.galaxy_s10
+    - person.devi
+    - person.zak
 
 downstairs_lights:
   name: Downstairs Lights
   entities:
-    - light.ge_dimmer_living
-    - light.entertainment_center_backlight
-    - light.ge_3way_dimmer_kitchen
-    - light.ge_dimmer_island
+    - light.ge_3way_dimmer_living
+    - light.entryway_hall_lights_dimmer
+    - light.kitchen_kitchen_island_dimmer
+    - light.kitchen_kitchen_recessed_dimmer
+    - light.kitchen_kitchen_sink
+    - switch.living_room_living_room_outlet_switch
+    - light.dining_dining
+    - switch.kitchen_under_cabinet_switch
+
+kitchen_lights:
+  name: Kitchen Lights
+  entities:
+    - light.kitchen_kitchen_island_dimmer
+    - light.kitchen_kitchen_recessed_dimmer
+    - switch.kitchen_under_cabinet_switch
+    - light.kitchen_kitchen_sink
+
+living_room_lights:
+  name: Living Room Lights
+  entities:
+    - light.ge_3way_dimmer_living
+    - switch.living_room_living_room_outlet_switch
+
+outdoor_lights:
+  name: Outdoor Lights
+  entities:
+    - switch.front_porch_front_porch_light_switch
+    - switch.front_porch_outdoor_outlet_switch
+
+google_speakers:
+  name: Google Speakers
+  entities:
+    - media_player.kitchen_display
+    - media_player.lenovosmartclock4270
+    - media_player.living_room_speaker
+    - media_player.office_speaker
+    

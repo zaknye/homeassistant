@@ -2,16 +2,6 @@ title: Home
 icon: mdi:home-heart
 background: 'left top / cover no-repeat url("/local/images/plant-background2.jpg") fixed'
 cards:
-  - type: custom:weather-card
-    style: |
-      ha-card {
-        border-radius: 5px;
-        -webkit-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-        -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-        box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
-      }
-    entity: weather.dark_sky
-    name: Weather
   - type: vertical-stack
     cards:
       - type: custom:mini-graph-card
@@ -22,9 +12,12 @@ cards:
             -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
             box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
           }
+        name: Temperature
         entities:
-          - entity: sensor.multisensor_temperature
-            name: Downstairs Temperature
+          - entity: sensor.vision_temperature_main
+            name: Main
+          - entity: sensor.vision_temperature_basement
+            name: Basement
       - type: horizontal-stack
         cards:
           - type: custom:mini-graph-card
@@ -35,9 +28,12 @@ cards:
                 -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
                 box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
               }
+            name: Humidity
             entities:
-              - entity: sensor.multisensor_humidity
-                name: Humidity
+              - entity: sensor.vision_humidity_main
+                name: Main
+              - entity: sensor.vision_humidity_basement
+                name: Basement
           - type: custom:mini-graph-card
             style: |
               ha-card {
@@ -46,29 +42,95 @@ cards:
                 -moz-box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
                 box-shadow: 5px 5px 11px 1px rgba(158,158,158,0.1);
               }
+            name: Luminance
             entities:
-              - entity: sensor.multisensor_luminance
-                name: Luminance
-  - type: markdown
-    content: >
-        # [[ sensor.time.state ]]
-        
-        ### [[ sensor.date.state ]]
-    style: |
-      ha-card {
-        margin-top: 2em;
-        margin-bottom: 4em;
-        background-color: rgba(0, 0, 0, 0);
-        font-family: 'Arial Black', Gadget, sans-serif;
-        font-size: 200%;
-        -webkit-box-shadow: none;
-        -moz-box-shadow: none;
-        box-shadow: none;
-        text-align: center;
-      }
-      h1, h3 {
-        font-weight: 300 !important;
-      }
+              - entity: sensor.vision_luminance_main
+                name: Main
+              - entity: sensor.vision_luminance_basement
+                name: Basement
+  - type: vertical-stack
+    cards:
+    - type: horizontal-stack
+      cards:
+      - type: custom:swipe-card
+        parameters:
+          speed: 550
+          spaceBetween: 40
+          threshold: 5
+        cards: 
+        - type: "custom:button-card"
+          #template: switch-theme
+          entity: group.living_room_lights
+          color_type: card
+          icon: mdi:sofa
+          name: Living
+        - type: grid
+          cards:
+          - type: "custom:button-card"
+            #template: card-theme
+            entity: light.ge_3way_dimmer_living
+            color_type: card
+            icon: mdi:ceiling-light
+            name: Living
+            hold_action: more-info
+          - type: "custom:button-card"
+            #template: card-theme
+            entity: switch.living_room_outlet_switch
+            color_type: card
+            icon: mdi:floor-lamp
+            name: Living
+            hold_action: more-info
+      - type: custom:swipe-card
+        parameters:
+          speed: 550
+          spaceBetween: 40
+          threshold: 5
+        cards: 
+          - type: "custom:button-card"
+            #template: switch-theme
+            entity: group.kitchen_lights
+            color_type: card
+            icon: mdi:fridge
+            name: Kitchen
+          - type: grid
+            cards:
+            - type: "custom:button-card"
+              #template: card-theme
+              entity: light.kitchen_kitchen_recessed_dimmer
+              color_type: card
+              icon: mdi:light-recessed
+              name: Kitchen Recessed
+              hold_action: more-info
+            - type: "custom:button-card"
+              #template: card-theme
+              entity: light.kitchen_kitchen_island_dimmer
+              color_type: card
+              icon: mdi:ceiling-light-multiple
+              name: Island
+              hold_action: more-info
+            - type: "custom:button-card"
+              #template: card-theme
+              entity: switch.kitchen_under_cabinet_switch
+              color_type: card
+              icon: mdi:wall-sconce-flat
+              name: Under Cabinet
+              hold_action: more-info
+    - type: horizontal-stack
+      cards:
+      - type: "custom:button-card"
+        #template: card-theme
+        entity: light.entryway_hall_lights_dimmer
+        color_type: card
+        icon: mdi:globe-light
+        name: Entryway
+        hold_action: more-info
+      - type: "custom:button-card"
+        #template: card-theme
+        entity: switch.leviton_dining
+        color_type: card
+        icon: mdi:table-chair
+        name: Dining
+        hold_action: more-info
   - type: vertical-stack
     cards:
       - type: "custom:button-card"
@@ -87,11 +149,6 @@ cards:
             color: rgb(66, 134, 244)
             icon: mdi:human-female
             name: Devi
-            state:
-              - value: 'home'
-                color: rgb(255, 255, 255)
-              - value: 'not_home'
-                color: rgb(211, 211, 211)
           - type: "custom:button-card"
             template: card-theme
             entity: device_tracker.galaxy_s10
@@ -99,10 +156,76 @@ cards:
             color: rgb(66, 134, 244)
             icon: mdi:human-male
             name: Zak
-            state:
-              - value: 'home'
-                color: rgb(255, 255, 255)
-              - value: 'not_home'
-                color: rgb(211, 211, 211)
           - type: "custom:button-card"
             color_type: blank-card
+  - type: custom:swipe-card
+    parameters:
+      speed: 550
+      spaceBetween: 40
+      threshold: 5
+    cards:
+      - type: "custom:button-card"
+        #template: switch-theme
+        entity: group.downstairs_lights
+        color_type: card
+        icon: mdi:home-floor-g
+        name: Main Floor Lights
+      - type: grid
+        cards:
+          - type: "custom:button-card"
+            #template: card-theme
+            name: lo
+            color: rgb(255,255,204)
+            color_type: icon
+            icon: mdi:brightness-4
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.living_low
+                transition: 1.0
+          - type: "custom:button-card"
+            #template: card-theme
+            name: med
+            color: rgb(255,255,153)
+            color_type: icon
+            icon: mdi:brightness-6
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.living_mid
+                transition: 1.0
+          - type: "custom:button-card"  
+            #template: card-theme
+            name: hi
+            color: rgb(255,255,102)
+            color_type: icon
+            icon: mdi:brightness-7
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.living_high
+                transition: 1.0
+          - type: "custom:button-card"
+            #template: card-theme
+            name: 'off'
+            color: black
+            color_type: card
+            icon: mdi:brightness-5
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.ALL_off
+                transition: 1.0
+            styles:
+              label:
+                - color: green
+          - type: "custom:button-card"
+            #template: card-theme
+            entity: switch.adaptive_lighting_main
+            color_type: card
+            icon: mdi:theme-light-dark
+

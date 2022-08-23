@@ -1,156 +1,60 @@
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
 homeassistant:
-  # Name of the location where Home Assistant is running
-  name: Home
-  # Location required to calculate the time the sun rises and sets
-  latitude: !secret latitude
-  longitude: !secret longitude
-  # Impacts weather/sunrise data (altitude above sea level in meters)
-  elevation: !secret elevation
-  # metric for Metric, imperial for Imperial
-  unit_system: imperial
-  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-  time_zone: !secret time_zone
-  # Customization file
   customize: !include customize.yaml
 
+# Text to speech
+tts:
+  - platform: google_translate
 
-# Enables the frontend
-frontend:
-  themes:
-    !include themes.yaml
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+switch: !include switch.yaml
+# Lighting Devices
+light: !include light.yaml
+# Sensors
+sensor: !include config/sensors.yaml
+
+#adaptive_lighting: !include config/adaptive_lighting.yaml
+
+# LG WebOS TV
+webostv:
+    host: !secret webostv_ip
+    name: LG OLED
     
+media_player: !include media_player.yaml
 
-# Enables configuration UI
-config:
-
-# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
-# http:
-#   base_url: example.duckdns.org:8123
-
-# Checks for available updates
-# Note: This component will send some information about your system to
-# the developers to assist with development of Home Assistant.
-# For more information, please see:
-# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
-updater:
-  # Optional, allows Home Assistant developers to focus on popular components.
-  # include_used_components: true
-
-# Discover some devices automatically
-discovery:
-
-# Allows you to issue voice commands from the frontend in enabled browsers
-conversation:
-
-# Enables support for tracking state changes over time
-history:
-
-# View all events in a logbook
-logbook:
-
-# Enables a map showing the location of tracked devices
-map:
-
-# Track the sun
-sun:
-
-#System Health
-system_health:
-
-#Speedtest Sensor
-#speedtestdotnet:
-
-#Pi Hole
-pi_hole:
-  host: !secret pi_hole_ip
-  ssl: false
-  verify_ssl: false
-
-#Database Settings
-recorder:
-  purge_keep_days: 10
-  purge_interval: 1
-
-#SSL Certificates
-#http:
-#  ssl_certificate: /home/homeassistant/.homeassistant/certificate.pem
-#  ssl_key: /home/homeassistant/.homeassistant/privkey.pem
-
-# Z-Wave Stick
-zwave:
-  usb_path: /dev/ttyACM0
-#
-# Below fixes the delayed off state of the GE Dimmers
-#
-  device_config:
-    light.ge_3way_dimmer_kitchen:
-      refresh_value: true
-      delay: 3
-    light.ge_dimmer_island:
-      refresh_value: true
-      delay: 3
-    light.ge_dimmer_living:
-      refresh_value: true
-      delay: 3
-#  device_config: !include zwave_device.config.yaml
+# YAML Lovelace config
+lovelace: !include lovelace.yaml
 
 input_boolean:
   morning_trigger:
     name: Morning first trigger
     initial: off
-  
-# Sensors
-sensor: !include config/sensors.yaml
-
-person:
-  - name: Zak
-    id: zak
-    device_trackers:
-      - device_tracker.galaxy_s10
-      - device_tracker.zak_laptop
-  - name: Devi
-    id: devi
-    device_trackers:
-      - device_tracker.devikasiphone
-      - device_tracker.devikas_mbp
 
 binary_sensor:
-  - platform: template
-    sensors:
-      livingroom_motion:
-        friendly_name: "Living Room Motion"
-        device_class: motion
-        value_template: "{{ states('sensor.multisensor_movement')|float > 0 }}"
-
-# Text to speech
-tts:
-  - platform: google_translate
-    service_name: google_say
-
-# Cloud
-cloud:
-
-#Weather plugin
-weather:
-  - platform: darksky
-    api_key: !secret darksky_api
-    mode: daily
-
-group: !include groups.yaml
-automation: !include automations.yaml
-script: !include scripts.yaml
-switch: !include switch.yaml
-scene: !include scene.yaml
-media_player: !include media_player.yaml
-lovelace:
-  mode: yaml
-
-#Lighting Devices
-light: !include light.yaml
-
-#Circadian Lighting
-circadian_lighting:
-
-device_sun_light_trigger:
-  light_group: group.downstairs_lights
-  device_group: group.people
+  # Bayesian Going to Bed
+  - platform: bayesian
+    name: 'Going_to_Bed'
+    prior: 0.1
+    probability_threshold: 0.9
+    observations:
+      - platform: 'state'
+        entity_id: 'media_player.onkyoreceiver'
+        prob_given_true: 0.5
+        prob_given_false: 0.1
+        to_state: 'off'
+      - platform: 'state'
+        entity_id: 'sun.sun'
+        prob_given_true: 0.8
+        prob_given_false: 0.1
+        to_state: 'below_horizon'
+      - platform: 'state'
+        entity_id: 'binary_sensor.upstairs_motion'
+        prob_given_true: 0.2
+        prob_given_false: 0.1
+        to_state: 'on'

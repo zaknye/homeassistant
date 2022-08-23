@@ -58,10 +58,3 @@
             data:
               entity_id: light.entertainment_center_backlight
               rgb_color: ( 0, 0, 255 )
-
-#Circadian Switch Settings
-  - platform: circadian_lighting
-    lights_brightness:
-      - light.ge_3way_dimmer_kitchen
-      - light.ge_dimmer_island
-      - light.ge_dimmer_living

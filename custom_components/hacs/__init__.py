@@ -1,187 +1,266 @@
 """
-Custom element manager for community created elements.
+HACS gives you a powerful UI to handle downloads of all your custom needs.
 
 For more details about this integration, please refer to the documentation at
 https://hacs.xyz/
 """
-import voluptuous as vol
-from aiogithubapi import AIOGitHub
-from homeassistant import config_entries
-from homeassistant.const import EVENT_HOMEASSISTANT_START
-from homeassistant.const import __version__ as HAVERSION
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from __future__ import annotations
+
+import os
+from typing import Any
+
+from aiogithubapi import AIOGitHubAPIException, GitHub, GitHubAPI
+from aiogithubapi.const import ACCEPT_HEADERS
+from awesomeversion import AwesomeVersion
+from homeassistant.components.lovelace.system_health import system_health_info
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.const import Platform, __version__ as HAVERSION
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.start import async_at_start
+from homeassistant.loader import async_get_integration
+import voluptuous as vol
 
-from .configuration_schema import hacs_base_config_schema, hacs_config_option_schema
-from .const import DEV_MODE, DOMAIN, ELEMENT_TYPES, STARTUP, VERSION
-from .constrains import check_constans
-from .hacsbase import Hacs
-from .hacsbase.configuration import Configuration
-from .hacsbase.data import HacsData
-from .hacsbase.migration import ValidateData
-from .setup import add_sensor, load_hacs_repository, setup_frontend
+from custom_components.hacs.frontend import async_register_frontend
 
-SCHEMA = hacs_base_config_schema()
-SCHEMA[vol.Optional("options")] = hacs_config_option_schema()
-CONFIG_SCHEMA = vol.Schema({DOMAIN: SCHEMA}, extra=vol.ALLOW_EXTRA)
+from .base import HacsBase
+from .const import DOMAIN, MINIMUM_HA_VERSION, STARTUP
+from .enums import ConfigurationType, HacsDisabledReason, HacsStage, LovelaceMode
+from .utils.configuration_schema import hacs_config_combined
+from .utils.data import HacsData
+from .utils.queue_manager import QueueManager
+from .utils.version import version_left_higher_or_equal_then_right
+from .websocket import async_register_websocket_commands
+
+CONFIG_SCHEMA = vol.Schema({DOMAIN: hacs_config_combined()}, extra=vol.ALLOW_EXTRA)
 
 
-async def async_setup(hass, config):
-    """Set up this integration using yaml."""
-    if DOMAIN not in config:
-        return True
-    hass.data[DOMAIN] = config
-    Hacs.hass = hass
-    Hacs.configuration = Configuration.from_dict(
-        config[DOMAIN], config[DOMAIN].get("options")
-    )
-    Hacs.configuration.config_type = "yaml"
-    await startup_wrapper_for_yaml(Hacs)
-    hass.async_create_task(
-        hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": config_entries.SOURCE_IMPORT}, data={}
+async def async_initialize_integration(
+    hass: HomeAssistant,
+    *,
+    config_entry: ConfigEntry | None = None,
+    config: dict[str, Any] | None = None,
+) -> bool:
+    """Initialize the integration"""
+    hass.data[DOMAIN] = hacs = HacsBase()
+    hacs.enable_hacs()
+
+    if config is not None:
+        if DOMAIN not in config:
+            return True
+        if hacs.configuration.config_type == ConfigurationType.CONFIG_ENTRY:
+            return True
+        hacs.configuration.update_from_dict(
+            {
+                "config_type": ConfigurationType.YAML,
+                **config[DOMAIN],
+                "config": config[DOMAIN],
+            }
         )
+
+    if config_entry is not None:
+        if config_entry.source == SOURCE_IMPORT:
+            hass.async_create_task(hass.config_entries.async_remove(config_entry.entry_id))
+            return False
+
+        hacs.configuration.update_from_dict(
+            {
+                "config_entry": config_entry,
+                "config_type": ConfigurationType.CONFIG_ENTRY,
+                **config_entry.data,
+                **config_entry.options,
+            }
+        )
+
+    integration = await async_get_integration(hass, DOMAIN)
+
+    hacs.set_stage(None)
+
+    hacs.log.info(STARTUP, integration.version)
+
+    clientsession = async_get_clientsession(hass)
+
+    hacs.integration = integration
+    hacs.version = integration.version
+    hacs.configuration.dev = integration.version == "0.0.0"
+    hacs.hass = hass
+    hacs.queue = QueueManager(hass=hass)
+    hacs.data = HacsData(hacs=hacs)
+    hacs.system.running = True
+    hacs.session = clientsession
+
+    hacs.core.lovelace_mode = LovelaceMode.YAML
+    try:
+        lovelace_info = await system_health_info(hacs.hass)
+        hacs.core.lovelace_mode = LovelaceMode(lovelace_info.get("mode", "yaml"))
+    except BaseException:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        # If this happens, the users YAML is not valid, we assume YAML mode
+        pass
+    hacs.log.debug("Configuration type: %s", hacs.configuration.config_type)
+    hacs.core.config_path = hacs.hass.config.path()
+
+    if hacs.core.ha_version is None:
+        hacs.core.ha_version = AwesomeVersion(HAVERSION)
+
+    ## Legacy GitHub client
+    hacs.github = GitHub(
+        hacs.configuration.token,
+        clientsession,
+        headers={
+            "User-Agent": f"HACS/{hacs.version}",
+            "Accept": ACCEPT_HEADERS["preview"],
+        },
     )
-    return True
 
+    ## New GitHub client
+    hacs.githubapi = GitHubAPI(
+        token=hacs.configuration.token,
+        session=clientsession,
+        **{"client_name": f"HACS/{hacs.version}"},
+    )
 
-async def async_setup_entry(hass, config_entry):
-    """Set up this integration using UI."""
-    conf = hass.data.get(DOMAIN)
-    if config_entry.source == config_entries.SOURCE_IMPORT:
-        if conf is None:
-            hass.async_create_task(
-                hass.config_entries.async_remove(config_entry.entry_id)
+    async def async_startup():
+        """HACS startup tasks."""
+        hacs.enable_hacs()
+
+        for location in (
+            hass.config.path("custom_components/custom_updater.py"),
+            hass.config.path("custom_components/custom_updater/__init__.py"),
+        ):
+            if os.path.exists(location):
+                hacs.log.critical(
+                    "This cannot be used with custom_updater. "
+                    "To use this you need to remove custom_updater form %s",
+                    location,
+                )
+
+                hacs.disable_hacs(HacsDisabledReason.CONSTRAINS)
+                return False
+
+        if not version_left_higher_or_equal_then_right(
+            hacs.core.ha_version.string,
+            MINIMUM_HA_VERSION,
+        ):
+            hacs.log.critical(
+                "You need HA version %s or newer to use this integration.",
+                MINIMUM_HA_VERSION,
             )
-        return False
-    Hacs.hass = hass
-    Hacs.configuration = Configuration.from_dict(
-        config_entry.data, config_entry.options
-    )
-    Hacs.configuration.config_type = "flow"
-    Hacs.configuration.config_entry = config_entry
-    config_entry.add_update_listener(reload_hacs)
-    startup_result = await hacs_startup(Hacs)
-    if not startup_result:
-        raise ConfigEntryNotReady
-    return startup_result
+            hacs.disable_hacs(HacsDisabledReason.CONSTRAINS)
+            return False
 
+        if not await hacs.data.restore():
+            hacs.disable_hacs(HacsDisabledReason.RESTORE)
+            return False
 
-async def startup_wrapper_for_yaml(hacs):
-    """Startup wrapper for yaml config."""
-    startup_result = await hacs_startup(hacs)
-    if not startup_result:
-        hacs.hass.components.frontend.async_remove_panel(
-            hacs.configuration.sidepanel_title.lower()
-            .replace(" ", "_")
-            .replace("-", "_")
-        )
-        hacs.logger.info("Could not setup HACS, trying again in 15 min")
-        async_call_later(hacs.hass, 900, startup_wrapper_for_yaml(hacs))
+        can_update = await hacs.async_can_update()
+        hacs.log.debug("Can update %s repositories", can_update)
 
+        hacs.set_active_categories()
 
-async def hacs_startup(hacs):
-    """HACS startup tasks."""
-    hacs.logger.debug(f"Configuration type: {hacs.configuration.config_type}")
-    hacs.version = VERSION
-    hacs.logger.info(STARTUP)
-    hacs.system.config_path = hacs.hass.config.path()
-    hacs.system.ha_version = HAVERSION
-    hacs.system.disabled = False
-    hacs.github = AIOGitHub(
-        hacs.configuration.token, async_create_clientsession(hacs.hass)
-    )
-    hacs.data = HacsData()
+        async_register_websocket_commands(hass)
+        async_register_frontend(hass, hacs)
 
-    # Check HACS Constrains
-    if not check_constans(hacs):
-        if hacs.configuration.config_type == "flow":
-            if hacs.configuration.config_entry is not None:
-                await async_remove_entry(hacs.hass, hacs.configuration.config_entry)
-        return False
+        if hacs.configuration.config_type == ConfigurationType.YAML:
+            hass.async_create_task(
+                async_load_platform(hass, Platform.SENSOR, DOMAIN, {}, hacs.configuration.config)
+            )
+            hacs.log.info("Update entities are only supported when using UI configuration")
 
-    # Set up frontend
-    await setup_frontend(hacs)
+        else:
+            if hacs.configuration.experimental:
+                hass.config_entries.async_setup_platforms(
+                    hacs.configuration.config_entry, [Platform.SENSOR, Platform.UPDATE]
+                )
+            else:
+                hass.config_entries.async_setup_platforms(
+                    hacs.configuration.config_entry, [Platform.SENSOR]
+                )
 
-    # Load HACS
-    if not await load_hacs_repository(hacs):
-        if hacs.configuration.config_type == "flow":
-            if hacs.configuration.config_entry is not None:
-                await async_remove_entry(hacs.hass, hacs.configuration.config_entry)
-        return False
+        hacs.set_stage(HacsStage.SETUP)
+        if hacs.system.disabled:
+            return False
 
-    val = ValidateData()
-    if not val.validate_local_data_file():
-        if hacs.configuration.config_type == "flow":
-            if hacs.configuration.config_entry is not None:
-                await async_remove_entry(hacs.hass, hacs.configuration.config_entry)
-        return False
+        # Schedule startup tasks
+        async_at_start(hass=hass, at_start_cb=hacs.startup_tasks)
 
-    # Restore from storefiles
-    if not await hacs.data.restore():
-        hacs_repo = hacs().get_by_name("hacs/integration")
-        hacs_repo.pending_restart = True
-        if hacs.configuration.config_type == "flow":
-            if hacs.configuration.config_entry is not None:
-                await async_remove_entry(hacs.hass, hacs.configuration.config_entry)
-        return False
+        hacs.set_stage(HacsStage.WAITING)
+        hacs.log.info("Setup complete, waiting for Home Assistant before startup tasks starts")
 
-    # Add aditional categories
-    if hacs.configuration.appdaemon:
-        ELEMENT_TYPES.append("appdaemon")
-    if hacs.configuration.python_script:
-        ELEMENT_TYPES.append("python_script")
-    if hacs.configuration.theme:
-        ELEMENT_TYPES.append("theme")
-    hacs.common.categories = sorted(ELEMENT_TYPES)
+        return not hacs.system.disabled
 
-    # Setup startup tasks
-    if hacs.configuration.config_type == "yaml":
-        hacs.hass.bus.async_listen_once(
-            EVENT_HOMEASSISTANT_START, hacs().startup_tasks()
-        )
-    else:
-        async_call_later(hacs.hass, 5, hacs().startup_tasks())
+    async def async_try_startup(_=None):
+        """Startup wrapper for yaml config."""
+        try:
+            startup_result = await async_startup()
+        except AIOGitHubAPIException:
+            startup_result = False
+        if not startup_result:
+            if (
+                hacs.configuration.config_type == ConfigurationType.YAML
+                or hacs.system.disabled_reason != HacsDisabledReason.INVALID_TOKEN
+            ):
+                hacs.log.info("Could not setup HACS, trying again in 15 min")
+                async_call_later(hass, 900, async_try_startup)
+            return
+        hacs.enable_hacs()
 
-    # Print DEV warning
-    if hacs.configuration.dev:
-        hacs.logger.warning(DEV_MODE)
-        hacs.hass.components.persistent_notification.create(
-            title="HACS DEV MODE", message=DEV_MODE, notification_id="hacs_dev_mode"
-        )
-
-    # Add sensor
-    add_sensor(hacs)
-
-    # Set up services
-    # await add_services(hacs)
+    await async_try_startup()
 
     # Mischief managed!
     return True
 
 
-async def async_remove_entry(hass, config_entry):
+async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
+    """Set up this integration using yaml."""
+    return await async_initialize_integration(hass=hass, config=config)
+
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Set up this integration using UI."""
+    config_entry.async_on_unload(config_entry.add_update_listener(async_reload_entry))
+    setup_result = await async_initialize_integration(hass=hass, config_entry=config_entry)
+    hacs: HacsBase = hass.data[DOMAIN]
+    return setup_result and not hacs.system.disabled
+
+
+async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
-    Hacs().logger.info("Disabling HACS")
-    Hacs().logger.info("Removing recuring tasks")
-    for task in Hacs().tasks:
+    hacs: HacsBase = hass.data[DOMAIN]
+
+    # Clear out pending queue
+    hacs.queue.clear()
+
+    for task in hacs.recuring_tasks:
+        # Cancel all pending tasks
         task()
-    Hacs().logger.info("Removing sensor")
+
+    # Store data
+    await hacs.data.async_write(force=True)
+
     try:
-        await hass.config_entries.async_forward_entry_unload(config_entry, "sensor")
-    except ValueError:
-        pass
-    Hacs().logger.info("Removing sidepanel")
-    try:
-        hass.components.frontend.async_remove_panel("hacs_web")
+        if hass.data.get("frontend_panels", {}).get("hacs"):
+            hacs.log.info("Removing sidepanel")
+            hass.components.frontend.async_remove_panel("hacs")
     except AttributeError:
         pass
-    Hacs().system.disabled = True
-    Hacs().logger.info("HACS is now disabled")
+
+    platforms = ["sensor"]
+    if hacs.configuration.experimental:
+        platforms.append("update")
+
+    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, platforms)
+
+    hacs.set_stage(None)
+    hacs.disable_hacs(HacsDisabledReason.REMOVED)
+
+    hass.data.pop(DOMAIN, None)
+
+    return unload_ok
 
 
-async def reload_hacs(hass, config_entry):
-    """Reload HACS."""
-    await async_remove_entry(hass, config_entry)
+async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+    """Reload the HACS config entry."""
+    await async_unload_entry(hass, config_entry)
     await async_setup_entry(hass, config_entry)
